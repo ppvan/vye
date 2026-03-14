@@ -1,4 +1,8 @@
+github.com/piglig/go-qr v0.2.6 h1:oE8v9NGXHWahoFrnS44xsq0Lq0oIRIV7gMBM8cfRGwE=
+github.com/piglig/go-qr v0.2.6/go.mod h1:funyXL4IdgMPcbICoVm1XweMtZy7Px3kyITTENkmA5w=
 github.com/rodrigocfd/windigo v0.2.5 h1:gLUh+x+W094CaVpkbtewrEIpBXvdfDxyI7NkOVT/TtY=
 github.com/rodrigocfd/windigo v0.2.5/go.mod h1:3zHhLYU08CkrMx5cdPlmC1HObT8fSldWtfS8cnSRzYo=
 github.com/rodrigocfd/windigo v0.2.6-0.20260314115555-483b8c785ab3 h1:LOeJvW/rjqpVWhwF6HDSa5wI19o62ubjOmFt6EPEgng=
 github.com/rodrigocfd/windigo v0.2.6-0.20260314115555-483b8c785ab3/go.mod h1:3zHhLYU08CkrMx5cdPlmC1HObT8fSldWtfS8cnSRzYo=
+golang.org/x/image v0.37.0 h1:ZiRjArKI8GwxZOoEtUfhrBtaCN+4b/7709dlT6SSnQA=
+golang.org/x/image v0.37.0/go.mod h1:/3f6vaXC+6CEanU4KJxbcUZyEePbyKbaLoDOe4ehFYY=
