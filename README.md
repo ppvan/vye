@@ -1,3 +1,3 @@
 ## Vye - QR code generator
 
-![preview.png](./preview.png)
+![preview.png](./winres/preview.png)

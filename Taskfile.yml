@@ -11,17 +11,9 @@ tasks:
     build:
         desc: Build the project
         deps: [winres]
-        vars:
-            MODE: '{{default "debug" .MODE}}'
-        cmds:
-            - task: build-{{.MODE}}
-
-    build-debug:
-        internal: true
         cmds:
             - go build -o vye.exe
 
-    build-release:
-        internal: true
+    release:
         cmds:
             - go build -trimpath -ldflags "-s -w -H=windowsgui" -o vye.exe
