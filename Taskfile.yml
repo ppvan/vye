@@ -1,0 +1,27 @@
+version: "3"
+
+tasks:
+    winres:
+        desc: Compile windows resources
+        cmds:
+            - go-winres.exe make
+        sources:
+            - winres/**/*
+
+    build:
+        desc: Build the project
+        deps: [winres]
+        vars:
+            MODE: '{{default "debug" .MODE}}'
+        cmds:
+            - task: build-{{.MODE}}
+
+    build-debug:
+        internal: true
+        cmds:
+            - go build -o vye.exe
+
+    build-release:
+        internal: true
+        cmds:
+            - go build -trimpath -ldflags "-s -w -H=windowsgui" -o vye.exe
