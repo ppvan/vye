@@ -23,9 +23,8 @@ type MyWindow struct {
 	wnd            *ui.Main
 	textLabel      *ui.Static
 	textEdit       *ui.Edit
-	sizeLabel      *ui.Static
-	sizeOptions    *ui.ComboBox
 	generateButton *ui.Button
+	qrImageLabel   *ui.Static
 	qrImage        *ui.Control
 	copyButton     *ui.Button
 	saveButton     *ui.Button
@@ -54,39 +53,31 @@ func ShowMainWindow() int {
 
 	textEdit := ui.NewEdit(wnd, ui.OptsEdit().
 		Position(ui.Dpi(20, 40)).
-		Width(ui.DpiX(320)),
-	)
-
-	sizeLabel := ui.NewStatic(wnd, ui.OptsStatic().
-		Text("Size").
-		Position(ui.Dpi(20, 215)),
-	)
-
-	sizeOptions := ui.NewComboBox(wnd, ui.OptsComboBox().
-		Position(ui.Dpi(20, 235)).
-		Width(ui.DpiX(320)).
-		Texts("Auto").
-		Select(0),
+		Height(ui.DpiY(120)).
+		Width(ui.DpiX(320)).CtrlStyle(co.ES_MULTILINE|co.ES_LEFT|co.ES_AUTOVSCROLL),
 	)
 
 	generateButton := ui.NewButton(wnd, ui.OptsButton().
-		Position(ui.Dpi(20, 430)).
+		Position(ui.Dpi(20, 405)).
 		Text("Generate").
 		Height(ui.DpiY(30)).
 		Width(ui.DpiX(320)),
 	)
 
-	qrImage := ui.NewControl(wnd, ui.OptsControl().Position(ui.Dpi(380, 20)).Size(ui.Dpi(320, 320)))
-	copyButton := ui.NewButton(wnd, ui.OptsButton().Position(ui.Dpi(380, 430)).Height(ui.DpiY(30)).Width(ui.DpiX(150)).Text("Copy to clipboard"))
-	saveButton := ui.NewButton(wnd, ui.OptsButton().Position(ui.Dpi(550, 430)).Height(ui.DpiY(30)).Width(ui.DpiX(150)).Text("Save"))
+	qrImageLabel := ui.NewStatic(wnd, ui.OptsStatic().
+		Text("QR code").
+		Position(ui.Dpi(380, 20)),
+	)
+	qrImage := ui.NewControl(wnd, ui.OptsControl().Position(ui.Dpi(380, 40)).Size(ui.Dpi(320, 320)))
+	copyButton := ui.NewButton(wnd, ui.OptsButton().Position(ui.Dpi(380, 405)).Height(ui.DpiY(30)).Width(ui.DpiX(150)).Text("Copy to clipboard"))
+	saveButton := ui.NewButton(wnd, ui.OptsButton().Position(ui.Dpi(550, 405)).Height(ui.DpiY(30)).Width(ui.DpiX(150)).Text("Save"))
 
 	me := &MyWindow{
 		wnd:            wnd,
 		textLabel:      textLabel,
 		textEdit:       textEdit,
-		sizeLabel:      sizeLabel,
-		sizeOptions:    sizeOptions,
 		generateButton: generateButton,
+		qrImageLabel:   qrImageLabel,
 		qrImage:        qrImage,
 		copyButton:     copyButton,
 		saveButton:     saveButton,
