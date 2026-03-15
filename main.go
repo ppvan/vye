@@ -5,7 +5,9 @@ import (
 	_ "embed"
 	"fmt"
 	"image"
+	"image/png"
 	"io"
+	"os"
 	"runtime"
 	"time"
 
@@ -35,6 +37,10 @@ type MyWindow struct {
 
 func main() {
 	runtime.LockOSThread() // Windows GUI must run on the OS thread
+
+	win.CoInitializeEx(co.COINIT_APARTMENTTHREADED | co.COINIT_DISABLE_OLE1DDE)
+	defer win.CoUninitialize()
+
 	ShowMainWindow()
 }
 
@@ -95,7 +101,7 @@ func (me *MyWindow) events() {
 		}
 		defer me.qrImage.Hwnd().EndPaint(&ps)
 
-		backgroundBrush, _ := win.GetSysColorBrush(co.COLOR(co.COLOR_BACKGROUND)) // RGB red = 0x0000FF in BGR
+		backgroundBrush, _ := win.GetSysColorBrush(co.COLOR(co.COLOR_WINDOW)) // RGB red = 0x0000FF in BGR
 		defer backgroundBrush.DeleteObject()
 		hdc.FillRect(&ps.RcPaint, backgroundBrush)
 
@@ -199,32 +205,68 @@ func (me *MyWindow) events() {
 	})
 
 	me.saveButton.On().BnClicked(func() {
+		releaser := win.NewOleReleaser() // will release all COM objects created here
+		defer releaser.Release()
+		var fod *win.IFileSaveDialog
+		_ = win.CoCreateInstance(
+			releaser,
+			&co.CLSID_FileSaveDialog,
+			nil,
+			co.CLSCTX_ALL,
+			&fod,
+		)
 
+		fod.SetFileName("qr_code.png")
+		fod.SetFileTypes([]win.COMDLG_FILTERSPEC{
+			{Name: "PNG Image", Spec: "*.png"},
+		})
+
+		if ok, _ := fod.Show(me.wnd.Hwnd()); ok {
+			item, _ := fod.GetResult(releaser)
+			filePath, _ := item.GetDisplayName(co.SIGDN_FILESYSPATH)
+
+			pngData, _ := bitmapToPngInMemory(me.qrImageData)
+
+			os.WriteFile(filePath, pngData, 0644)
+		}
 	})
 }
 
 func pngToBitmapInMemory(pngData []byte) ([]byte, error) {
-	// Use bytes.NewReader to create an io.Reader from the input PNG byte slice
 	pngReader := bytes.NewReader(pngData)
 
-	// 1. Decode the PNG image data into a generic image.Image interface
 	img, _, err := image.Decode(pngReader)
 	if err != nil {
 		return nil, fmt.Errorf("failed to decode PNG: %w", err)
 	}
 
-	// Create a bytes.Buffer to store the encoded BMP data in memory
 	var bmpBuffer bytes.Buffer
 
-	// 2. Encode the image.Image into BMP format, writing to the buffer
 	// Note: The golang.org/x/image/bmp package only supports specific bit depths.
 	err = bmp.Encode(&bmpBuffer, img)
 	if err != nil {
 		return nil, fmt.Errorf("failed to encode BMP: %w", err)
 	}
 
-	// Return the in-memory BMP byte slice
 	return bmpBuffer.Bytes(), nil
+}
+
+func bitmapToPngInMemory(bmpData []byte) ([]byte, error) {
+	bmpReader := bytes.NewReader(bmpData)
+
+	img, err := bmp.Decode(bmpReader)
+	if err != nil {
+		return nil, fmt.Errorf("failed to decode BMP: %w", err)
+	}
+
+	var pngBuffer bytes.Buffer
+
+	err = png.Encode(&pngBuffer, img)
+	if err != nil {
+		return nil, fmt.Errorf("failed to encode PNG: %w", err)
+	}
+
+	return pngBuffer.Bytes(), nil
 }
 
 type nopCloser struct {
