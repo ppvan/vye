@@ -49,7 +49,7 @@ func ShowMainWindow() int {
 	wnd := ui.NewMain(
 		ui.OptsMain().
 			Title(title).
-			Size(ui.Dpi(720, 480)),
+			Size(ui.Dpi(720, 480)).ClassIconId(42),
 	)
 
 	textLabel := ui.NewStatic(wnd, ui.OptsStatic().
@@ -150,7 +150,7 @@ func (me *MyWindow) events() {
 			var buf bytes.Buffer
 			wr := nopCloser{Writer: &buf}
 
-			w2 := standard.NewWithWriter(wr, standard.WithQRWidth(40))
+			w2 := standard.NewWithWriter(wr, standard.WithQRWidth(16))
 			if err = qrc.Save(w2); err != nil {
 				panic(err)
 			}

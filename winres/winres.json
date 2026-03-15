@@ -2,13 +2,16 @@
     "RT_GROUP_ICON": {
         "APP": {
             "0000": ["icon.png", "icon16.png"]
+        },
+        "#42": {
+            "0409": "icon.ico"
         }
     },
     "RT_MANIFEST": {
         "#1": {
             "0409": {
                 "identity": {
-                    "name": "",
+                    "name": "SimpleQR",
                     "version": ""
                 },
                 "description": "",
@@ -38,8 +41,8 @@
                 },
                 "info": {
                     "0409": {
-                        "Comments": "",
-                        "CompanyName": "",
+                        "Comments": "Simple QR code app",
+                        "CompanyName": "ppvan personal app",
                         "FileDescription": "",
                         "FileVersion": "",
                         "InternalName": "",
