@@ -59,7 +59,7 @@ func ShowMainWindow() int {
 
 	generateButton := ui.NewButton(wnd, ui.OptsButton().
 		Position(ui.Dpi(20, 405)).
-		Text("Generate").
+		Text("Generate QR code").
 		Height(ui.DpiY(30)).
 		Width(ui.DpiX(320)),
 	)
@@ -95,7 +95,13 @@ func (me *MyWindow) events() {
 		}
 		defer me.qrImage.Hwnd().EndPaint(&ps)
 
+		backgroundBrush, _ := win.GetSysColorBrush(co.COLOR(co.COLOR_BACKGROUND)) // RGB red = 0x0000FF in BGR
+		defer backgroundBrush.DeleteObject()
+		hdc.FillRect(&ps.RcPaint, backgroundBrush)
+
 		if me.qrImageData == nil {
+			me.copyButton.Hwnd().EnableWindow(false)
+			me.saveButton.Hwnd().EnableWindow(false)
 			return
 		}
 
@@ -112,10 +118,6 @@ func (me *MyWindow) events() {
 			panic(err.Error()) // a PNG file will crash here
 		}
 
-		redBrush, _ := win.GetSysColorBrush(co.COLOR(co.COLOR_GRAYTEXT)) // RGB red = 0x0000FF in BGR
-		defer redBrush.DeleteObject()
-		hdc.FillRect(&ps.RcPaint, redBrush)
-
 		sz, _ := pic.Size()
 		_, _ = pic.Render(hdc,
 			win.POINT{},
@@ -126,25 +128,38 @@ func (me *MyWindow) events() {
 	})
 
 	me.generateButton.On().BnClicked(func() {
-		text := me.textEdit.Text()
-		qrc, err := qrcode.New(text)
-		if err != nil {
-			fmt.Printf("could not generate QRCode: %v", err)
-			return
-		}
-
-		var buf bytes.Buffer
-		wr := nopCloser{Writer: &buf}
-
-		w2 := standard.NewWithWriter(wr, standard.WithQRWidth(40))
-		if err = qrc.Save(w2); err != nil {
-			panic(err)
-		}
-
-		bitmapBuf, _ := pngToBitmapInMemory(buf.Bytes())
-		me.qrImageData = bitmapBuf
-
+		me.qrImageData = nil
+		me.generateButton.SetText("Generating QR code...")
+		me.generateButton.Hwnd().EnableWindow(false)
 		me.qrImage.Hwnd().RedrawWindow(nil, 0, co.RDW_INVALIDATE)
+
+		text := me.textEdit.Text()
+		go func() {
+			qrc, err := qrcode.New(text)
+			if err != nil {
+				fmt.Printf("could not generate QRCode: %v", err)
+				return
+			}
+
+			var buf bytes.Buffer
+			wr := nopCloser{Writer: &buf}
+
+			w2 := standard.NewWithWriter(wr, standard.WithQRWidth(40))
+			if err = qrc.Save(w2); err != nil {
+				panic(err)
+			}
+			bitmapBuf, _ := pngToBitmapInMemory(buf.Bytes())
+
+			me.wnd.UiThread(func() {
+				me.qrImageData = bitmapBuf
+				me.qrImage.Hwnd().RedrawWindow(nil, 0, co.RDW_INVALIDATE)
+				me.generateButton.Hwnd().EnableWindow(true)
+				me.generateButton.SetText("Generate QR code")
+				me.copyButton.Hwnd().EnableWindow(true)
+				me.saveButton.Hwnd().EnableWindow(true)
+			})
+		}()
+
 	})
 
 	me.copyButton.On().BnClicked(func() {
@@ -181,6 +196,10 @@ func (me *MyWindow) events() {
 				me.copyButton.SetText("Copy to clipboard")
 			})
 		}()
+	})
+
+	me.saveButton.On().BnClicked(func() {
+
 	})
 }
 
