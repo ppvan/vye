@@ -7,6 +7,7 @@ import (
 	"image"
 	"io"
 	"runtime"
+	"time"
 
 	"github.com/rodrigocfd/windigo/co"
 	"github.com/rodrigocfd/windigo/ui"
@@ -181,6 +182,14 @@ func (me *MyWindow) events() {
 			fmt.Print(err)
 			return
 		}
+
+		me.copyButton.SetText("QR image copied!")
+		go func() {
+			time.Sleep(2 * time.Second)
+			me.wnd.UiThread(func() {
+				me.copyButton.SetText("Copy to clipboard")
+			})
+		}()
 	})
 }
 
