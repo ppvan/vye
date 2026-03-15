@@ -5,21 +5,18 @@ import (
 	_ "embed"
 	"fmt"
 	"image"
+	"io"
 	"runtime"
 
-	go_qr "github.com/piglig/go-qr"
 	"github.com/rodrigocfd/windigo/co"
 	"github.com/rodrigocfd/windigo/ui"
 	"github.com/rodrigocfd/windigo/win"
+	"github.com/yeqown/go-qrcode/v2"
+	"github.com/yeqown/go-qrcode/writer/standard"
 	"golang.org/x/image/bmp"
 )
 
-//go:embed gopher.bmp
-var gopher []byte
-
 const title = "QR generator"
-
-// https://github.com/piglig/go-qr
 
 type MyWindow struct {
 	wnd            *ui.Main
@@ -79,6 +76,8 @@ func ShowMainWindow() int {
 	)
 
 	qrImage := ui.NewControl(wnd, ui.OptsControl().Position(ui.Dpi(380, 20)).Size(ui.Dpi(320, 320)))
+	copyButton := ui.NewButton(wnd, ui.OptsButton().Position(ui.Dpi(380, 430)).Height(ui.DpiY(30)).Width(ui.DpiX(150)).Text("Copy to clipboard"))
+	saveButton := ui.NewButton(wnd, ui.OptsButton().Position(ui.Dpi(550, 430)).Height(ui.DpiY(30)).Width(ui.DpiX(150)).Text("Save"))
 
 	me := &MyWindow{
 		wnd:            wnd,
@@ -88,6 +87,8 @@ func ShowMainWindow() int {
 		sizeOptions:    sizeOptions,
 		generateButton: generateButton,
 		qrImage:        qrImage,
+		copyButton:     copyButton,
+		saveButton:     saveButton,
 	}
 	me.events()
 	return wnd.RunAsMain()
@@ -95,16 +96,16 @@ func ShowMainWindow() int {
 
 func (me *MyWindow) events() {
 	me.qrImage.On().WmPaint(func() {
-		if me.qrImageData == nil {
-			return
-		}
-
 		var ps win.PAINTSTRUCT
 		hdc, err := me.qrImage.Hwnd().BeginPaint(&ps)
 		if err != nil {
 			panic(err)
 		}
 		defer me.qrImage.Hwnd().EndPaint(&ps)
+
+		if me.qrImageData == nil {
+			return
+		}
 
 		rel := win.NewOleReleaser()
 		defer rel.Release() // important: release your COM resources to avoid leaks
@@ -134,19 +135,52 @@ func (me *MyWindow) events() {
 
 	me.generateButton.On().BnClicked(func() {
 		text := me.textEdit.Text()
-		errCorLvl := go_qr.Low
-		qr, err := go_qr.EncodeText(text, errCorLvl)
+		qrc, err := qrcode.New(text)
 		if err != nil {
-			panic(err)
+			fmt.Printf("could not generate QRCode: %v", err)
+			return
 		}
-		config := go_qr.NewQrCodeImgConfig(10, 4)
 
 		var buf bytes.Buffer
-		qr.WriteAsPNG(config, &buf)
+		wr := nopCloser{Writer: &buf}
+
+		w2 := standard.NewWithWriter(wr, standard.WithQRWidth(40))
+		if err = qrc.Save(w2); err != nil {
+			panic(err)
+		}
 
 		bitmapBuf, _ := pngToBitmapInMemory(buf.Bytes())
-
 		me.qrImageData = bitmapBuf
+
+		me.qrImage.Hwnd().RedrawWindow(nil, 0, co.RDW_INVALIDATE)
+	})
+
+	me.copyButton.On().BnClicked(func() {
+		if me.qrImageData == nil {
+			return
+		}
+
+		hClip, err := win.OpenClipboard(win.HWND(0))
+		if err != nil {
+			fmt.Print(err)
+			return
+		}
+		defer hClip.CloseClipboard()
+
+		if err = hClip.EmptyClipboard(); err != nil {
+			fmt.Print(err)
+			return
+		}
+
+		// BMP file has a 14-byte BITMAPFILEHEADER — CF_DIB needs it stripped
+		const bmpFileHeaderSize = 14
+		dibData := me.qrImageData[bmpFileHeaderSize:]
+
+		err = hClip.SetClipboardData(co.CF_DIB, dibData)
+		if err != nil {
+			fmt.Print(err)
+			return
+		}
 	})
 }
 
@@ -173,3 +207,9 @@ func pngToBitmapInMemory(pngData []byte) ([]byte, error) {
 	// Return the in-memory BMP byte slice
 	return bmpBuffer.Bytes(), nil
 }
+
+type nopCloser struct {
+	io.Writer
+}
+
+func (nopCloser) Close() error { return nil }
