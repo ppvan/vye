@@ -2,95 +2,15 @@ package main
 
 import (
 	"bytes"
-	_ "embed"
 	"fmt"
-	"image"
-	"image/png"
-	"io"
 	"os"
-	"runtime"
 	"time"
 
 	"github.com/rodrigocfd/windigo/co"
-	"github.com/rodrigocfd/windigo/ui"
 	"github.com/rodrigocfd/windigo/win"
 	"github.com/yeqown/go-qrcode/v2"
 	"github.com/yeqown/go-qrcode/writer/standard"
-	"golang.org/x/image/bmp"
 )
-
-const title = "QR generator"
-
-type MyWindow struct {
-	wnd            *ui.Main
-	textLabel      *ui.Static
-	textEdit       *ui.Edit
-	generateButton *ui.Button
-	qrImageLabel   *ui.Static
-	qrImage        *ui.Control
-	copyButton     *ui.Button
-	saveButton     *ui.Button
-
-	textLabelData string
-	qrImageData   []byte
-}
-
-func main() {
-	runtime.LockOSThread() // Windows GUI must run on the OS thread
-
-	win.CoInitializeEx(co.COINIT_APARTMENTTHREADED | co.COINIT_DISABLE_OLE1DDE)
-	defer win.CoUninitialize()
-
-	ShowMainWindow()
-}
-
-func ShowMainWindow() int {
-
-	wnd := ui.NewMain(
-		ui.OptsMain().
-			Title(title).
-			Size(ui.Dpi(720, 480)).ClassIconId(42),
-	)
-
-	textLabel := ui.NewStatic(wnd, ui.OptsStatic().
-		Text("Text").
-		Position(ui.Dpi(20, 20)),
-	)
-
-	textEdit := ui.NewEdit(wnd, ui.OptsEdit().
-		Position(ui.Dpi(20, 40)).
-		Height(ui.DpiY(120)).
-		Width(ui.DpiX(320)).CtrlStyle(co.ES_MULTILINE|co.ES_LEFT|co.ES_AUTOVSCROLL),
-	)
-
-	generateButton := ui.NewButton(wnd, ui.OptsButton().
-		Position(ui.Dpi(20, 405)).
-		Text("Generate QR code").
-		Height(ui.DpiY(30)).
-		Width(ui.DpiX(320)),
-	)
-
-	qrImageLabel := ui.NewStatic(wnd, ui.OptsStatic().
-		Text("QR code").
-		Position(ui.Dpi(380, 20)),
-	)
-	qrImage := ui.NewControl(wnd, ui.OptsControl().Position(ui.Dpi(380, 40)).Size(ui.Dpi(320, 320)))
-	copyButton := ui.NewButton(wnd, ui.OptsButton().Position(ui.Dpi(380, 405)).Height(ui.DpiY(30)).Width(ui.DpiX(150)).Text("Copy to clipboard"))
-	saveButton := ui.NewButton(wnd, ui.OptsButton().Position(ui.Dpi(550, 405)).Height(ui.DpiY(30)).Width(ui.DpiX(150)).Text("Save"))
-
-	me := &MyWindow{
-		wnd:            wnd,
-		textLabel:      textLabel,
-		textEdit:       textEdit,
-		generateButton: generateButton,
-		qrImageLabel:   qrImageLabel,
-		qrImage:        qrImage,
-		copyButton:     copyButton,
-		saveButton:     saveButton,
-	}
-	me.events()
-	return wnd.RunAsMain()
-}
 
 func (me *MyWindow) events() {
 	me.qrImage.On().WmPaint(func() {
@@ -231,46 +151,3 @@ func (me *MyWindow) events() {
 		}
 	})
 }
-
-func pngToBitmapInMemory(pngData []byte) ([]byte, error) {
-	pngReader := bytes.NewReader(pngData)
-
-	img, _, err := image.Decode(pngReader)
-	if err != nil {
-		return nil, fmt.Errorf("failed to decode PNG: %w", err)
-	}
-
-	var bmpBuffer bytes.Buffer
-
-	// Note: The golang.org/x/image/bmp package only supports specific bit depths.
-	err = bmp.Encode(&bmpBuffer, img)
-	if err != nil {
-		return nil, fmt.Errorf("failed to encode BMP: %w", err)
-	}
-
-	return bmpBuffer.Bytes(), nil
-}
-
-func bitmapToPngInMemory(bmpData []byte) ([]byte, error) {
-	bmpReader := bytes.NewReader(bmpData)
-
-	img, err := bmp.Decode(bmpReader)
-	if err != nil {
-		return nil, fmt.Errorf("failed to decode BMP: %w", err)
-	}
-
-	var pngBuffer bytes.Buffer
-
-	err = png.Encode(&pngBuffer, img)
-	if err != nil {
-		return nil, fmt.Errorf("failed to encode PNG: %w", err)
-	}
-
-	return pngBuffer.Bytes(), nil
-}
-
-type nopCloser struct {
-	io.Writer
-}
-
-func (nopCloser) Close() error { return nil }

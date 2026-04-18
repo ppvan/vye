@@ -4,7 +4,7 @@ tasks:
     winres:
         desc: Compile windows resources
         cmds:
-            - go-winres.exe make
+            - go-winres.exe make --output app/
         sources:
             - winres/**/*
 
@@ -12,8 +12,8 @@ tasks:
         desc: Build the project
         deps: [winres]
         cmds:
-            - go build -o vye.exe
+            - go build -o vye.exe ./app
 
     release:
         cmds:
-            - go build -trimpath -ldflags "-s -w -H=windowsgui" -o vye.exe
+            - go build -trimpath -ldflags "-s -w -H=windowsgui" -o vye.exe ./app
