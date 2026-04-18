@@ -1,6 +1,6 @@
 ## Vye - QR code generator
 
-![preview.png](./winres/preview.png)
+![preview1.png](./winres/preview.png)
 
 
 ## Installation
